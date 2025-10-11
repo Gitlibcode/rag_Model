@@ -5,7 +5,9 @@ import faiss
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from sentence_transformers import SentenceTransformer
+import torch
 
+# --- Helper Functions ---
 def split_text_into_chunks(text, chunk_size=500, chunk_overlap=50):
     chunks = []
     for i in range(0, len(text), chunk_size - chunk_overlap):
@@ -18,7 +20,7 @@ def rag_qa(query, index, text_chunks, model, tokenizer, embedding_model, top_k=3
     retrieved_chunks = [text_chunks[i] for i in I[0]]
     context = "\n".join(retrieved_chunks)
     prompt = f"Context: {context}\n\nQuestion: {query}\n\nAnswer:"
-    inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True)
+    inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True).to(model.device)
     outputs = model.generate(
         inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
@@ -37,7 +39,9 @@ def rag_qa(query, index, text_chunks, model, tokenizer, embedding_model, top_k=3
         answer = answer[answer_start + len("Answer:"):].strip()
     return answer
 
-st.title("📘 RAG Question Answering with GLM-4.6")
+# --- Streamlit UI ---
+st.set_page_config(page_title="RAG PDF QA", layout="centered")
+st.title("📘 RAG Question Answering with GLM-4")
 
 uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
 
@@ -54,11 +58,15 @@ if uploaded_file:
     index = faiss.IndexFlatL2(chunk_embeddings.shape[1])
     index.add(np.array(chunk_embeddings))
 
-    tokenizer = AutoTokenizer.from_pretrained("zai-org/GLM-4.6-FP8")
-    model = AutoModelForCausalLM.from_pretrained("zai-org/GLM-4.6-FP8")
-    if tokenizer.pad_token is None:
-        tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
-        model.resize_token_embeddings(len(tokenizer))
+    with st.spinner("Loading GLM-4 model..."):
+        model_name = "THUDM/glm-4-9b"
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.float16)
+        model.eval()
+        model.to("cuda" if torch.cuda.is_available() else "cpu")
+        if tokenizer.pad_token is None:
+            tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
+            model.resize_token_embeddings(len(tokenizer))
 
     query = st.text_input("Enter your question:")
     if query:

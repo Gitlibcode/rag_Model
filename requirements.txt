@@ -2,7 +2,5 @@ streamlit
 pypdf
 faiss-cpu
 numpy
-torch
-transformers>=4.35.0
 sentence-transformers
-accelerate
+requests

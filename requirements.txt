@@ -1,0 +1,6 @@
+pypdf
+transformers
+sentence-transformers
+faiss-cpu
+torch # sentence-transformers depends on torch
+numpy

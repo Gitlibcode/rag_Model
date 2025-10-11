@@ -60,8 +60,9 @@ if uploaded_file:
 
     with st.spinner("Loading GLM-4 model..."):
         model_name = "THUDM/glm-4-9b"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.float16)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
+
         model.eval()
         model.to("cuda" if torch.cuda.is_available() else "cpu")
         if tokenizer.pad_token is None:

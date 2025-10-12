@@ -1,6 +1,7 @@
 streamlit
+python-docx
 pypdf
-faiss-cpu
-numpy
+pandas
 sentence-transformers
-requests
+faiss-cpu
+openpyxl

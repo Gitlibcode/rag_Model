@@ -1,68 +1,124 @@
-import streamlit as st
-import pypdf
-import io
-import faiss
-import numpy as np
+import os
 import requests
+import streamlit as st
+from pypdf import PdfReader
+from docx import Document
+import pandas as pd
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
+from faiss import IndexFlatL2
+import tempfile
 
-# --- Helper Functions ---
-def split_text_into_chunks(text, chunk_size=500, chunk_overlap=50):
-    chunks = []
-    for i in range(0, len(text), chunk_size - chunk_overlap):
-        chunks.append(text[i:i + chunk_size])
-    return chunks
+# --- UI Setup ---
+st.title("RAG App with Z.AI GLM-4.6")
+api_key = st.secrets["ZAI_API_KEY"]
 
-def call_zhipu_api(prompt, api_key):
-    url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+uploaded_file = st.file_uploader("📁 Upload a document (PDF, DOCX, XLSX)", type=["pdf", "docx", "xlsx"])
+user_query = st.text_area("💬 Enter your prompt")
+
+# --- File Readers ---
+def read_pdf(file):
+    reader = PdfReader(file)
+    return "\n".join([page.extract_text() for page in reader.pages])
+
+def read_word(file):
+    doc = Document(file)
+    return "\n".join([p.text for p in doc.paragraphs])
+
+def read_excel(file):
+    df = pd.read_excel(file)
+    return df.to_string()
+
+def extract_text(file, filename):
+    if filename.endswith(".pdf"):
+        return read_pdf(file)
+    elif filename.endswith(".docx"):
+        return read_word(file)
+    elif filename.endswith(".xlsx"):
+        return read_excel(file)
+    return ""
+
+# --- Text Splitting ---
+def split_text(text, chunk_size=1000, chunk_overlap=200):
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        length_function=len,
+        is_separator_regex=False,
+    )
+    return splitter.split_text(text)
+
+# --- Embedding ---
+def generate_embeddings(chunks):
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    return model.encode(chunks)
+
+# --- Vector Store ---
+def create_vector_db(embeddings):
+    dim = embeddings.shape[1]
+    index = IndexFlatL2(dim)
+    index.add(embeddings)
+    return index
+
+# --- Retrieval ---
+def retrieve_chunks(query, vector_db, chunks, top_k=3):
+    query_embedding = generate_embeddings([query])
+    distances, indices = vector_db.search(query_embedding, top_k)
+    return [chunks[i] for i in indices[0]]
+
+# --- LLM Generation ---
+def generate_response(api_key, query, relevant_chunks):
+    context = "\n".join(relevant_chunks)
+    prompt = f"""Based on the following context, answer the query:
+
+Context:
+{context}
+
+Query: {query}
+
+Answer in one clear sentence:"""
+
+    url = "https://api.z.ai/api/paas/v4/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "glm-4",
+        "model": "glm-4.6",
         "messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}
-        ]
+        ],
+        "temperature": 0.7,
+        "max_tokens": 1024
     }
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        message = result["choices"][0]["message"]
+        return message.get("content") or message.get("reasoning_content") or "No answer returned."
+    except Exception as e:
+        return f"Error: {e}"
+
+# --- Main Logic ---
+if st.button("🚀 Run RAG"):
+    if not api_key:
+        st.error("Please enter your API key.")
+    elif not uploaded_file:
+        st.error("Please upload a document.")
+    elif not user_query.strip():
+        st.error("Please enter a prompt.")
     else:
-        return f"Error: {response.status_code} - {response.text}"
-
-def rag_qa(query, index, text_chunks, embedding_model, api_key, top_k=3):
-    query_embedding = embedding_model.encode([query])
-    distance, I = index.search(np.array(query_embedding), top_k)
-    retrieved_chunks = [text_chunks[i] for i in I[0]]
-    context = "\n".join(retrieved_chunks)
-    prompt = f"Context: {context}\n\nQuestion: {query}\n\nAnswer:"
-    return call_zhipu_api(prompt, api_key)
-
-# --- Streamlit UI ---
-st.set_page_config(page_title="RAG PDF QA", layout="centered")
-st.title("📘 RAG Question Answering with GLM-4.6 (ZhipuAI API)")
-
-api_key = st.text_input("🔑 Enter your ZhipuAI API key:", type="password")
-uploaded_file = st.file_uploader("📄 Upload a PDF file", type="pdf")
-
-if uploaded_file and api_key:
-    st.success("PDF uploaded and API key received!")
-    extracted_text = ""
-    reader = pypdf.PdfReader(io.BytesIO(uploaded_file.read()))
-    for page in reader.pages:
-        extracted_text += page.extract_text()
-
-    text_chunks = split_text_into_chunks(extracted_text)
-    embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-    chunk_embeddings = embedding_model.encode(text_chunks)
-    index = faiss.IndexFlatL2(chunk_embeddings.shape[1])
-    index.add(np.array(chunk_embeddings))
-
-    query = st.text_input("❓ Enter your question:")
-    if query:
-        with st.spinner("Generating answer..."):
-            answer = rag_qa(query, index, text_chunks, embedding_model, api_key)
-        st.markdown("### 🧠 Answer")
-        st.write(answer)
+        with st.spinner("Processing document..."):
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(uploaded_file.read())
+                tmp_path = tmp.name
+            text = extract_text(tmp_path, uploaded_file.name)
+            chunks = split_text(text)
+            embeddings = generate_embeddings(chunks)
+            vector_db = create_vector_db(embeddings)
+            relevant = retrieve_chunks(user_query, vector_db, chunks)
+            response = generate_response(api_key, user_query, relevant)
+        st.success("✅ Response generated!")
+        st.text_area("🧠 Model Response", value=response, height=200)

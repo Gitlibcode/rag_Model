@@ -102,34 +102,6 @@ Answer in one clear sentence:"""
         return message.get("content") or message.get("reasoning_content") or "No answer returned."
     except Exception as e:
         return f"Error: {e}"
-def expand_with_openai(openai_api_key, short_answer):
-    prompt = f"""Expand the following business insight into a detailed summary for a stakeholder report:
-
-Insight: "{short_answer}"
-
-Write in 2–3 descriptive sentences with clarity and context."""
-
-    url = "https://api.openai.com/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {openai_api_key}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "gpt-4",  # or "gpt-3.5-turbo"
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.7,
-        "max_tokens": 300
-    }
-
-    try:
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
-    except Exception as e:
-        return f"Error from OpenAI: {e}"
 
 
 # --- Main Logic ---

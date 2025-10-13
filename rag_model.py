@@ -131,6 +131,7 @@ Write in 2–3 descriptive sentences with clarity and context."""
     except Exception as e:
         return f"Error from OpenAI: {e}"
 
+
 # --- Main Logic ---
 if st.button("🚀 Run RAG"):
     if not api_key:
@@ -150,11 +151,10 @@ if st.button("🚀 Run RAG"):
             vector_db = create_vector_db(embeddings)
             relevant = retrieve_chunks(user_query, vector_db, chunks)
             response = generate_response(api_key, user_query, relevant)
-            with st.spinner("Generating descriptive summary with OpenAI..."):
+
+        with st.spinner("Generating descriptive summary with OpenAI..."):
             expanded_summary = expand_with_openai(openai_api_key, response)
 
         st.success("✅ Response generated!")
-        #st.text_area("🧠 Model Response", value=response, height=200)
         st.text_area("🧠 Concise Answer (Z.AI)", value=response, height=150)
-st.text_area("📄 Descriptive Summary (OpenAI)", value=expanded_summary, height=200)
-
+        st.text_area("📄 Descriptive Summary (OpenAI)", value=expanded_summary, height=200)

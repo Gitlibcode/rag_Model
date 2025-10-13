@@ -163,4 +163,4 @@ if st.button("🚀 Run RAG"):
 
         # Display OpenAI expansion
         st.markdown("### 📄 OpenAI Expansion")
-        st.text_area("Descriptive Summary", value=expanded_summary, height=200, key="openai_output")
+      #  st.text_area("Descriptive Summary", value=expanded_summary, height=200, key="openai_output")

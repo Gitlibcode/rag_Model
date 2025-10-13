@@ -12,6 +12,8 @@ import tempfile
 # --- UI Setup ---
 st.title("RAG App with Z.AI GLM-4.6")
 api_key = st.secrets["ZAI_API_KEY"]
+openai_api_key = st.secrets["OPENAI_API_KEY"] if "OPENAI_API_KEY" in st.secrets else st.text_input("🔑 Enter your OpenAI API Key", type="password")
+
 
 uploaded_file = st.file_uploader("📁 Upload a document (PDF, DOCX, XLSX)", type=["pdf", "docx", "xlsx"])
 user_query = st.text_area("💬 Enter your prompt")
@@ -100,6 +102,34 @@ Answer in one clear sentence:"""
         return message.get("content") or message.get("reasoning_content") or "No answer returned."
     except Exception as e:
         return f"Error: {e}"
+def expand_with_openai(openai_api_key, short_answer):
+    prompt = f"""Expand the following business insight into a detailed summary for a stakeholder report:
+
+Insight: "{short_answer}"
+
+Write in 2–3 descriptive sentences with clarity and context."""
+
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {openai_api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "gpt-4",  # or "gpt-3.5-turbo"
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 300
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"Error from OpenAI: {e}"
 
 # --- Main Logic ---
 if st.button("🚀 Run RAG"):
@@ -120,5 +150,11 @@ if st.button("🚀 Run RAG"):
             vector_db = create_vector_db(embeddings)
             relevant = retrieve_chunks(user_query, vector_db, chunks)
             response = generate_response(api_key, user_query, relevant)
+            with st.spinner("Generating descriptive summary with OpenAI..."):
+    expanded_summary = expand_with_openai(openai_api_key, response)
+
         st.success("✅ Response generated!")
-        st.text_area("🧠 Model Response", value=response, height=200)
+        #st.text_area("🧠 Model Response", value=response, height=200)
+        st.text_area("🧠 Concise Answer (Z.AI)", value=response, height=150)
+st.text_area("📄 Descriptive Summary (OpenAI)", value=expanded_summary, height=200)
+

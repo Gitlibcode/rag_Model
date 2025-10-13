@@ -78,7 +78,7 @@ Context:
 
 Query: {query}
 
-Answer in one clear sentence with figure if data involved in table and then details description below:"""
+If the answer involves data, present it in one clear sentence followed by a table with figures. If the answer is theoretical, summarize it in bullet points with a brief explanation below."
 
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"

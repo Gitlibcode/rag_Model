@@ -79,7 +79,7 @@ Context:
 
 Query: {query}
 
-Answer in one clear sentence with figure if data involved in table and then details description below:"""
+instruction = """Answer in one clear sentence with figure if data involved in table and then details description below."""
 
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"

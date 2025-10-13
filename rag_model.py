@@ -79,9 +79,7 @@ Context:
 {context}
 
 Query: {query}
-
-Answer in one clear sentence:"""
-Answer in with figure if data involved in table and then details description below:"""
+Answer in line and then explain why to display summary :"""
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"
     headers = {

@@ -78,7 +78,7 @@ Context:
 
 Query: {query}
 
-Answer in one clear sentence:"""
+Answer in one clear sentence and then details description below:"""
 
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"

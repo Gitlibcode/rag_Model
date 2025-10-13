@@ -151,7 +151,7 @@ if st.button("🚀 Run RAG"):
             relevant = retrieve_chunks(user_query, vector_db, chunks)
             response = generate_response(api_key, user_query, relevant)
             with st.spinner("Generating descriptive summary with OpenAI..."):
-    expanded_summary = expand_with_openai(openai_api_key, response)
+            expanded_summary = expand_with_openai(openai_api_key, response)
 
         st.success("✅ Response generated!")
         #st.text_area("🧠 Model Response", value=response, height=200)

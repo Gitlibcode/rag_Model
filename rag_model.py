@@ -79,7 +79,7 @@ Context:
 {context}
 
 Query: {query}
-Answer in line and then explain why to display summary :"""
+Answer in one line first and then proper report  :"""
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"
     headers = {

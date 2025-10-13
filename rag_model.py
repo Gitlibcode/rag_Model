@@ -131,8 +131,8 @@ if st.button("🚀 Run RAG"):
 
         # Display Z.AI output
         st.markdown("### 🧠 Z.AI Response")
-        st.text_area("Concise Answer", value=response, height=150, key="zai_output")
+        st.text_area("Model Response", value=response, height=150, key="zai_output")
 
         # Display OpenAI expansion
-        st.markdown("### 📄 OpenAI Expansion")
+       # st.markdown("### 📄 OpenAI Expansion")
       #  st.text_area("Descriptive Summary", value=expanded_summary, height=200, key="openai_output")

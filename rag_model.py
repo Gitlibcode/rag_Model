@@ -79,7 +79,7 @@ Context:
 {context}
 
 Query: {query}
-Answer in one line first and then proper report  :"""
+Answer in one clear sentence. If the query involves data, include a table with figures. Then provide a detailed explanation below in bullet points or paragraph form."""
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"
     headers = {

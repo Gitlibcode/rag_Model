@@ -67,6 +67,7 @@ def retrieve_chunks(query, vector_db, chunks, top_k=3):
     query_embedding = generate_embeddings([query])
     distances, indices = vector_db.search(query_embedding, top_k)
     return [chunks[i] for i in indices[0]]
+Answer in one clear sentence with figure if data involved in table and then details description below:"""
 
 # --- LLM Generation ---
 def generate_response(api_key, query, relevant_chunks):
@@ -78,7 +79,7 @@ Context:
 
 Query: {query}
 
-If the answer involves data, present it in one clear sentence followed by a table with figures. If the answer is theoretical, summarize it in bullet points with a brief explanation below."
+Answer in one clear sentence with figure if data involved in table and then details description below:"""
 
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"

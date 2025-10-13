@@ -79,6 +79,7 @@ Context:
 Query: {query}
 
 Answer in one clear sentence:"""
+Then Answer in details:"""
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"
     headers = {
@@ -131,7 +132,7 @@ if st.button("🚀 Run RAG"):
 
         # Display Z.AI output
         st.markdown("### 🧠 Z.AI Response")
-        st.text_area("Model Response", value=response, height=150, key="zai_output")
+        st.text_area("Concise Answer", value=response, height=150, key="zai_output")
 
         # Display OpenAI expansion
        # st.markdown("### 📄 OpenAI Expansion")

@@ -79,7 +79,7 @@ Context:
 Query: {query}
 
 Answer in one clear sentence:"""
-Then Answer in details:"""
+
 
     url = "https://api.z.ai/api/paas/v4/chat/completions"
     headers = {

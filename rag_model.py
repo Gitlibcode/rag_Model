@@ -156,5 +156,11 @@ if st.button("🚀 Run RAG"):
             expanded_summary = expand_with_openai(openai_api_key, response)
 
         st.success("✅ Response generated!")
-        st.text_area("🧠 Concise Answer (Z.AI)", value=response, height=150)
-        st.text_area("📄 Descriptive Summary (OpenAI)", value=expanded_summary, height=200)
+
+        # Display Z.AI output
+        st.markdown("### 🧠 Z.AI Response")
+        st.text_area("Concise Answer", value=response, height=150, key="zai_output")
+
+        # Display OpenAI expansion
+        st.markdown("### 📄 OpenAI Expansion")
+        st.text_area("Descriptive Summary", value=expanded_summary, height=200, key="openai_output")

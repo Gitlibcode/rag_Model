@@ -4,7 +4,7 @@ import streamlit as st
 from pypdf import PdfReader
 from docx import Document
 import pandas as pd
-from langchain_community.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from faiss import IndexFlatL2
 import tempfile
